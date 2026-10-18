@@ -60,3 +60,9 @@ Kein Build, kein npm, keine Abhängigkeit, kein Framework, kein Zustandsspeicher
 kein Teamtarif, keine API, keine Integration, keine Nah-Duplikat-Erkennung, keine
 Entitätsauflösung, keine Vertrauenszahl. Alles davon steht in `docs/inceptune-start.md` mit
 Begründung.
+
+## Lizenz
+
+Urheberrecht vorbehalten, siehe `LICENSE`. Der Quelltext liegt offen, damit die
+Aussage „kein Netzaufruf nach dem Laden" nachprüfbar ist — nicht als Freigabe zur
+Weiterverwendung.
