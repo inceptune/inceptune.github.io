@@ -1,0 +1,293 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Imprint, privacy and terms &middot; Inceptune</title>
+<meta name="description" content="Who operates Inceptune, what is processed when you load the page, and under what terms you may use it.">
+<meta name="robots" content="index,follow">
+<style>
+:root{
+  --paper:#fafaf8; --ink:#000; --rule:#d9d7d0; --rule-strong:#9a978e;
+  --gap:#b3002d; --soft:#8a867c; --wash:#f1f0ea;
+  --serif:ui-serif,Charter,Georgia,"Times New Roman",serif;
+  --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,"Liberation Mono",monospace;
+  --step:clamp(1rem,.95rem + .2vw,1.0625rem);
+  --h1:clamp(1.6rem,1.2rem + 1.6vw,2.4rem);
+  --h2:clamp(1.1rem,1.02rem + .4vw,1.3rem);
+}
+*{box-sizing:border-box}
+body{
+  margin:0;background:var(--paper);color:var(--ink);
+  font:var(--step)/1.65 var(--serif);
+  padding:0 clamp(1rem,4vw,3rem);
+  -webkit-text-size-adjust:100%;
+}
+.wrap{max-width:68ch;margin:0 auto}
+a{color:var(--ink);text-decoration-thickness:1px;text-underline-offset:.18em;overflow-wrap:anywhere}
+a:hover{color:var(--gap)}
+:focus-visible{outline:2px solid var(--gap);outline-offset:3px}
+h1,h2,h3{font-weight:600;line-height:1.2;margin:0}
+h1{font-size:var(--h1);max-width:34ch;letter-spacing:-.01em}
+h2{font-size:var(--h2);margin:0 0 .6rem}
+h3{font-size:1rem;margin:1.6rem 0 .3rem}
+p,ul,dl{margin:0 0 1rem}
+ul{padding-left:1.1rem}
+li{margin:0 0 .35rem}
+.masthead{
+  display:flex;flex-wrap:wrap;gap:.6rem 1.2rem;align-items:baseline;
+  padding:1.1rem 0;border-bottom:2px solid var(--ink);margin-bottom:2.4rem;
+}
+.brand{font-family:var(--mono);font-weight:700;letter-spacing:-.02em;font-size:1rem}
+.eyebrow{font-family:var(--mono);font-size:.68rem;letter-spacing:.14em;color:var(--soft);margin:0 0 .5rem;text-transform:uppercase}
+section{padding:0 0 2.6rem;margin:0 0 2.6rem;border-bottom:1px solid var(--rule)}
+section:last-of-type{border-bottom:0}
+.updated{font-family:var(--mono);font-size:.7rem;color:var(--soft);letter-spacing:.04em}
+/* Zwei Spalten erst, wenn beide zusammen hineinpassen. `min(14rem,100%)`
+   allein genügt nicht: das begrenzt die EINE Spur auf den Container, nicht
+   das PAAR. Bei 320px forderte die Beschriftung 224 von 288 verfügbaren
+   Pixeln, der Wert nahm sich den Rest und 99 statt 64 — Überlauf auf 357.
+   Darum unterhalb von 34rem gestapelt, und der Wert bekommt `minmax(0,1fr)`,
+   damit ein langes Wort die Spur nicht aufdrückt. */
+dl.facts{display:grid;grid-template-columns:minmax(0,1fr);gap:.1rem 1.2rem}
+dl.facts dt{font-family:var(--mono);font-size:.72rem;letter-spacing:.06em;color:var(--soft);padding-top:.5em}
+dl.facts dd{margin:0 0 .6rem;overflow-wrap:anywhere}
+@media (min-width:34rem){
+  dl.facts{grid-template-columns:minmax(min(14rem,40%),auto) minmax(0,1fr);gap:.35rem 1.2rem}
+  dl.facts dt{padding-top:.25em}
+  dl.facts dd{margin:0}
+}
+.quote{
+  border-left:2px solid var(--rule-strong);padding:.2rem 0 .2rem 1rem;margin:0 0 1rem;
+  background:var(--wash);
+}
+.quote p{margin:0 0 .4rem}
+.quote .src{font-family:var(--mono);font-size:.68rem;color:var(--soft);display:block}
+.open{border:1px dashed var(--rule-strong);padding:.9rem 1rem;margin:0 0 1rem;background:transparent}
+.open .lab{font-family:var(--mono);font-size:.68rem;letter-spacing:.1em;color:var(--gap);display:block;margin-bottom:.3rem;text-transform:uppercase}
+.open p{margin:0}
+.small{font-size:.93rem}
+.toc{font-family:var(--mono);font-size:.76rem;letter-spacing:.02em;padding:0;list-style:none;display:flex;gap:1.2rem;flex-wrap:wrap;margin:0 0 2.6rem}
+.toc li{margin:0}
+footer{padding:2rem 0 3rem;border-top:2px solid var(--ink);font-family:var(--mono);font-size:.7rem;color:var(--soft);line-height:1.9}
+table{border-collapse:collapse;width:100%;font-size:.93rem;margin:0 0 1rem}
+th,td{text-align:left;padding:.45rem .6rem .45rem 0;border-bottom:1px solid var(--rule);vertical-align:top}
+/* `anywhere` gehört in die Wertspalte, wo eine lange URL sonst die Tabelle
+   aufdrückt — NICHT in die Beschriftungsspalte: dort zerlegte es
+   «Transfer outside the EEA» in «Transfe / r / outside», obwohl der
+   Umbruch zwischen den Wörtern gereicht hätte. */
+td{overflow-wrap:anywhere}
+th{
+  font-family:var(--mono);font-size:.7rem;letter-spacing:.06em;color:var(--soft);
+  font-weight:400;width:10.5rem;padding-right:1rem;overflow-wrap:normal;
+}
+/* Unter 34rem reicht die Breite für zwei Spalten nicht. Statt zu quetschen
+   wird gestapelt — dieselbe Entscheidung wie bei der Impressumsliste. */
+@media (max-width:33.99rem){
+  table,tbody,tr,th,td{display:block;width:auto}
+  tr{border-bottom:1px solid var(--rule);padding:.3rem 0}
+  th,td{border-bottom:0;padding:0}
+  th{padding-top:.3rem}
+  td{padding-bottom:.4rem}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="masthead">
+  <span class="brand">Inceptune</span>
+  <span style="font-family:var(--mono);font-size:.7rem;color:var(--soft)">Imprint &middot; Privacy &middot; Terms</span>
+  <span style="margin-left:auto"><a href="./" style="font-family:var(--mono);font-size:.72rem">&larr; back to the tool</a></span>
+</header>
+
+<h1>Who runs this, what is processed, and under what terms.</h1>
+<p class="small" style="color:var(--soft)">Three things on one page, because they are short. Nothing
+here is written to sound reassuring &mdash; where a question is still open, it says so in the margin
+rather than being answered with a plausible sentence.</p>
+
+<ul class="toc">
+  <li><a href="#imprint">1 &middot; Imprint</a></li>
+  <li><a href="#privacy">2 &middot; Privacy</a></li>
+  <li><a href="#terms">3 &middot; Terms</a></li>
+</ul>
+
+<!-- ============================================================ 1 IMPRINT -->
+<section id="imprint">
+<p class="eyebrow">1 &middot; Imprint</p>
+<h2>Service provider</h2>
+<p class="small">The items below are the ones required of an information society service provider by
+&sect; 4(1) of the Estonian Information Society Services Act &mdash; name, registry code,
+<em>the name of the register</em>, address and contact details including an email address, and the
+VAT identification number.</p>
+
+<dl class="facts">
+  <dt>Name</dt>                 <dd>Inceptune O&Uuml;</dd>
+  <dt>Registry code</dt>        <dd>17300663</dd>
+  <dt>Register</dt>             <dd>Estonian Commercial Register (&auml;riregister)</dd>
+  <dt>Address</dt>              <dd>Tartu mnt 67/1-13b, 10115 Tallinn, Harju maakond, Estonia</dd>
+  <dt>Email</dt>                <dd><a href="mailto:hello@inceptune.com">hello@inceptune.com</a></dd>
+  <dt>Board member</dt>         <dd>Tobias Oberrauch</dd>
+  <dt>VAT identification</dt>   <dd>EE102889378</dd>
+  <dt>Field of activity</dt>    <dd>Computer programming (EMTAK 62101) &mdash; an activity that
+                                    requires no activity licence, so &sect; 4(1)2) has nothing to
+                                    name here.</dd>
+</dl>
+
+<p class="small">Registry data read from the Estonian business register on 18 October 2026.</p>
+</section>
+
+<!-- ============================================================ 2 PRIVACY -->
+<section id="privacy">
+<p class="eyebrow">2 &middot; Privacy</p>
+<h2>What happens to your data when you use this page</h2>
+<p class="updated">Information under Article 13 GDPR &middot; last changed 18 October 2026</p>
+
+<h3>Controller</h3>
+<p>Inceptune O&Uuml;, address as in the imprint above,
+<a href="mailto:hello@inceptune.com">hello@inceptune.com</a>. No data protection officer has been
+appointed.</p>
+
+<h3>The file you drop in is not processed by us</h3>
+<p>This is the one claim worth checking rather than believing. Your file is read by code running in
+your own browser tab. It is not uploaded, not copied, and not transmitted &mdash; there is no server
+of ours that could receive it, which is also why no account exists and no cookie is set.</p>
+<p>You do not have to take that on trust. Open your browser's developer tools, switch to the network
+panel, and drop a file in: no request leaves the page. The code that does the reading is
+<a href="./inceptune.js">inceptune.js</a>, published in full for exactly this reason.</p>
+
+<h3>What the host logs</h3>
+<p>The page itself is delivered by GitHub Pages, operated by GitHub, Inc. (San Francisco, USA).
+Delivering any web page means your IP address reaches the server that sends it. GitHub states this
+plainly in its own documentation:</p>
+<div class="quote">
+  <p>&bdquo;When a GitHub Pages site is visited, the visitor's IP address is logged and stored for
+  security purposes, regardless of whether the visitor has signed into GitHub or not.&ldquo;</p>
+  <span class="src">GitHub Docs &mdash; <a href="https://docs.github.com/en/pages/getting-started-with-github-pages/what-is-github-pages">What is GitHub Pages?</a>, read 18 October 2026</span>
+</div>
+<table>
+  <tr><th>Data</th><td>IP address of the requesting device, and the request data a web server
+      ordinarily receives with it.</td></tr>
+  <tr><th>Purpose</th><td>Delivering the page, and the security of the hosting platform.</td></tr>
+  <tr><th>Legal basis</th><td>Article 6(1)(f) GDPR &mdash; the legitimate interest in delivering a
+      requested page and in keeping the platform that delivers it secure.</td></tr>
+  <tr><th>Recipient</th><td>GitHub, Inc. These logs are made by GitHub for GitHub's own security
+      purposes. We have no access to them and receive no copy.</td></tr>
+  <tr><th>Transfer outside the EEA</th><td>To the USA. GitHub states that for such transfers it
+      &bdquo;generally rel[ies] on the standard contractual clauses published by the European
+      Commission&ldquo; under Commission Implementing Decision 2021/914, and that it complies with
+      the EU&ndash;U.S. Data Privacy Framework.
+      (<a href="https://docs.github.com/en/site-policy/privacy-policies/github-general-privacy-statement">GitHub General Privacy Statement</a>, read 18 October 2026)</td></tr>
+</table>
+<div class="open">
+  <span class="lab">Open point, stated rather than smoothed over</span>
+  <p class="small">Two things are not settled here and we will not invent an answer. First, GitHub's
+  current privacy statement does not say how long these logs are kept, so no retention period is
+  given above. Second, whether GitHub acts as our processor or as an independent controller for logs
+  it makes for its own security purposes is a legal classification we have not had reviewed. The
+  disclosure above is deliberately the wider one: you are told who receives the data either way.</p>
+</div>
+
+<h3>If you write to us</h3>
+<p>If you send mail to <a href="mailto:hello@inceptune.com">hello@inceptune.com</a>, we process your
+address and the content of your message in order to answer it &mdash; Article 6(1)(b) GDPR where your
+message concerns a contract or its preparation, otherwise Article 6(1)(f), the legitimate interest in
+answering a question that was put to us. We keep such correspondence as long as the matter is open
+and thereafter as long as a statutory retention duty requires.</p>
+
+<h3>What there is none of</h3>
+<ul>
+  <li>No cookies. None are set, so there is nothing to consent to and no banner.</li>
+  <li>No analytics, no pixel, no tag manager, no A/B tool, no session recording.</li>
+  <li>No account, no login, no newsletter, no profiling and no automated decision-making within the
+      meaning of Article 22 GDPR.</li>
+  <li>No fonts, scripts or images fetched from a third party. Everything the page uses is either part
+      of the page or already on your device.</li>
+</ul>
+
+<h3>Your rights</h3>
+<p>You have the right of access (Article 15), rectification (16), erasure (17), restriction of
+processing (18), data portability (20) and to object to processing based on legitimate interests
+(21). Write to <a href="mailto:hello@inceptune.com">hello@inceptune.com</a>. Note the practical
+consequence of the paragraphs above: for a visit to this page we hold no data about you that we could
+hand over, correct or erase &mdash; the logs are GitHub's, not ours.</p>
+<p>You also have the right to lodge a complaint with a supervisory authority (Article 77). The
+authority competent for us is the Estonian Data Protection Inspectorate, Andmekaitse Inspektsioon
+(<a href="https://www.aki.ee/">www.aki.ee</a>). You may equally turn to the authority of your own
+place of residence.</p>
+</section>
+
+<!-- ============================================================== 3 TERMS -->
+<section id="terms">
+<p class="eyebrow">3 &middot; Terms</p>
+<h2>Terms of use</h2>
+<p class="updated">Last changed 18 October 2026</p>
+
+<h3>What is on offer today</h3>
+<p>Today there is exactly one thing: the free tier, which runs in your browser without an account and
+without payment. Nothing is sold here at present, so no contract for consideration is concluded by
+using this page.</p>
+
+<h3>Use</h3>
+<p>You may use the page for your own purposes, commercial ones included, and may keep and pass on the
+reports it produces &mdash; they are your output over your data. What is <em>not</em> granted is a
+licence to the source code: it is published so that the claim &bdquo;no network request after
+load&ldquo; is checkable, not as a release for reuse. The precise wording, including what reading and
+quoting remains expressly permitted, is in <a href="https://github.com/inceptune/inceptune.github.io/blob/main/LICENSE">LICENSE</a>.</p>
+
+<h3>What this tool does and does not claim</h3>
+<p>The five counts are deterministic: the same file yields the same result, and every figure states
+how it was produced &mdash; counted, a ratio, your own input, or not determined. That is the whole
+claim.</p>
+<p>It follows that the tool reports on <em>the file you gave it</em>, and on nothing else. It does not
+know whether your file is complete, current or representative, it does not advise, and a finding of
+&bdquo;not determined&ldquo; is an honest statement about the data rather than a defect. Decisions you
+take on the basis of a report are yours.</p>
+
+<h3>Availability</h3>
+<p>The page is served as a static file by GitHub Pages. No availability is promised and none is owed;
+if the host is down, the page is down. Because the free tier needs no server of ours, a copy you have
+already loaded keeps working in that tab.</p>
+
+<h3>Premium, once it exists</h3>
+<p>The premium tier is not live. When it becomes available, billing will run through a merchant of
+record &mdash; a provider that is itself the seller towards you. That matters for your rights, so the
+provider will be named on this page before the first sale, and its buyer terms will then govern the
+purchase, including the statutory right of withdrawal for consumers and the VAT shown on your
+invoice.</p>
+<p>The prices quoted on the front page &mdash; $12 per month, $120 per year &mdash; are stated net,
+<strong>excluding value added tax</strong>. The applicable tax is the one of your own country, it is
+added at checkout, and it is shown on the invoice issued by the merchant of record. There are no
+delivery charges, because there is nothing to deliver.</p>
+<div class="open">
+  <span class="lab">Open point &mdash; not yet decided</span>
+  <p class="small">The merchant of record has not been chosen. Until it is, this page cannot name the
+  withdrawal procedure, the refund rule or the governing buyer terms, and it will not guess at them.
+  No payment can be taken before that is filled in.</p>
+</div>
+
+<h3>Liability and applicable law</h3>
+<p>Estonian law applies. Where you are a consumer, the mandatory consumer protection of your country
+of residence is unaffected by that choice.</p>
+<div class="open">
+  <span class="lab">Open point &mdash; drafted, not yet reviewed</span>
+  <p class="small">A limitation of liability belongs here, and writing one that is both enforceable
+  and fair is a lawyer's job rather than ours. Until it has been reviewed, no limitation is asserted:
+  what applies is simply the law, which for a free tool provided without consideration is the
+  starting point anyway. This paragraph will be replaced, not quietly deleted.</p>
+</div>
+</section>
+
+<footer>
+  <b style="color:var(--ink)">Inceptune O&Uuml;</b> &middot; Registry code 17300663 &middot;
+  Estonian Commercial Register &middot; VAT EE102889378<br>
+  Tartu mnt 67/1-13b, 10115 Tallinn, Harju maakond, Estonia &middot;
+  Board member: Tobias Oberrauch<br>
+  <a href="mailto:hello@inceptune.com">hello@inceptune.com</a> &middot;
+  <a href="./">inceptune.com</a> &middot;
+  <a href="https://github.com/inceptune">github.com/inceptune</a>
+</footer>
+
+</div>
+</body>
+</html>

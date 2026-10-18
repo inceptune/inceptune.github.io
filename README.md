@@ -47,9 +47,14 @@ its own footer that it makes no network request after it loads, and that promise
 - **Postfach einrichten.** `hello@inceptune.com` steht an allen drei Stellen in der Seite, aber
   die Domain trägt heute einen Null-MX (`MX 0 .` nach RFC 7505) und weist damit jede Mail ab.
   Ohne MX des Postfachanbieters prallt jede Antwort auf die Startposts ab.
-- ⟨Pflichtfeld⟩ Datenschutzerklärung nach Art. 13 DSGVO und AGB mit Rechtezusicherung des Nutzers.
-  Auch eine Seite ohne Verarbeitung braucht beides; eine Auftragsverarbeitung nach Art. 28 braucht
-  sie nicht, weil nichts übertragen wird.
+- ~~Datenschutzerklärung und AGB~~ — **erledigt**, `legal.html`. Die Annahme „eine Seite ohne
+  Verarbeitung braucht sie trotzdem" war richtig, aber aus dem falschen Grund: es **gibt** eine
+  Verarbeitung. GitHub schreibt in der eigenen Dokumentation, dass die IP jedes Besuchers
+  protokolliert wird. Zwei Punkte stehen dort offen und sind als offen ausgewiesen, nicht
+  glattgeschrieben: die Aufbewahrungsdauer (GitHub nennt keine) und die Einordnung von GitHub als
+  Auftragsverarbeiter oder eigener Verantwortlicher.
+- ⟨Pflichtfeld⟩ Haftungsbeschränkung in den AGB — bewusst **leer gelassen** statt erfunden. Solange
+  sie nicht geprüft ist, gilt schlicht das Gesetz, und der Absatz sagt das auch so.
 - Entscheiden, ob der fünfte Befund (byteidentische Nachdrucke) beworben wird. Gemessen am eigenen
   Bestand feuert er fast nie: 237 Dokumente, 234 distinkte Hashes, und die einzige Dublette war die
   eigene Mockvorlage. Die tragfähige Abgrenzung sind Zeitraum, Dominanz und Abdeckungsanteil.
@@ -66,3 +71,26 @@ Begründung.
 Urheberrecht vorbehalten, siehe `LICENSE`. Der Quelltext liegt offen, damit die
 Aussage „kein Netzaufruf nach dem Laden" nachprüfbar ist — nicht als Freigabe zur
 Weiterverwendung.
+
+## Rechtsseite und die Pflichtangaben
+
+`legal.html` trägt Impressum, Datenschutz und Nutzungsbedingungen auf einer Seite, mit den Ankern
+`#imprint`, `#privacy`, `#terms`. Sie lädt selbst nichts nach — fünf externe Verweise, alle
+Quellenangaben, null `<script>`, null `<img>`, null Fremd-Stylesheet.
+
+Maßgeblich ist **§ 4 Abs. 1 des estnischen Infoühiskonna teenuse seadus** (Information Society
+Services Act), selbst im Volltext gelesen am 18.10.2026 über Riigi Teataja. Er verlangt
+„directly and permanently accessible":
+
+| Ziffer | Verlangt | Steht in |
+|---|---|---|
+| 1 | Name, **Registrikood**, **Name des Registers**, Anschrift, Kontakt **inkl. E-Mail** | `legal.html#imprint` + Fuß beider Seiten |
+| 2 | Registrierungs-/Lizenznummer, *soweit das Tätigkeitsfeld eine verlangt* | entfällt — Programmeerimine (62101) verlangt keine |
+| 3 | bei Preisnennung: **ob Steuern und Lieferkosten enthalten sind** | Tarifabschnitt in `index.html` + `legal.html#terms` |
+| 4 | **USt-Identifikationsnummer**, wenn steuerpflichtig | beide Seiten |
+
+Zwei dieser Angaben fehlten im ersten Auslieferstand: der **Name des Registers** und die
+**Steuerangabe am Preis**. Beide sind jetzt in CI festgenagelt (`Pflichtangaben des
+Dienstanbieters vollständig`), damit sie nicht beim nächsten Umformulieren des Fußes
+verschwinden. Das Tor hat die Steuerangabe beim ersten Lauf prompt als fehlend gemeldet — sie
+stand nur am Preis, nicht in den Bedingungen.

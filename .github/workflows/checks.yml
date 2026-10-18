@@ -25,12 +25,67 @@ jobs:
           echo "externe Verweise: $n (erlaubt: 1)"
           test "$n" = "1"
 
+      # Die Rechtsseite DARF Quellen verlinken — eine Datenschutzerklärung
+      # ohne Quelle wäre eine Behauptung. Ein *Link* ist aber kein Ladevorgang.
+      # Geprüft wird deshalb nicht die Zahl der Links, sondern die Eigenschaft,
+      # die das Versprechen trägt: die Seite zieht keine Fremdressource.
+      - name: Rechtsseite lädt keine Fremdressource
+        run: |
+          fail=0
+          for pat in '<script' '<img' 'rel="stylesheet"' 'src="https\?:' '@import'; do
+            if grep -q "$pat" legal.html; then
+              echo "::error::legal.html enthält '$pat' — damit lädt die Seite etwas nach"
+              fail=1
+            fi
+          done
+          test "$fail" = "0"
+
+      # § 4 Abs. 1 des estnischen Infoühiskonna teenuse seadus verlangt diese
+      # Angaben "directly and permanently accessible". Ziffer 1 nennt
+      # ausdrücklich AUCH den Namen des Registers — der fehlte im ersten
+      # Auslieferstand und ist genau deshalb hier festgenagelt.
+      - name: Pflichtangaben des Dienstanbieters vollständig
+        run: |
+          fail=0
+          while IFS='|' read -r needle label; do
+            if ! grep -qF "$needle" legal.html; then
+              echo "::error::legal.html fehlt: $label ($needle)"
+              fail=1
+            fi
+          done <<'ITEMS'
+          17300663|Registrikood (§ 4 Abs. 1 Ziff. 1)
+          Estonian Commercial Register|Name des Registers (§ 4 Abs. 1 Ziff. 1)
+          Tartu mnt 67/1-13b|Anschrift (§ 4 Abs. 1 Ziff. 1)
+          hello@inceptune.com|E-Mail-Adresse (§ 4 Abs. 1 Ziff. 1)
+          EE102889378|USt-Identifikationsnummer (§ 4 Abs. 1 Ziff. 4)
+          excluding value added tax|Steuerangabe zum Preis (§ 4 Abs. 1 Ziff. 3)
+          ITEMS
+          test "$fail" = "0"
+
+      # "Permanently accessible" heißt: von der Seite aus erreichbar. Ein
+      # Impressum, auf das nichts zeigt, erfüllt die Pflicht nicht.
+      - name: Impressum ist von der Seite aus erreichbar
+        run: |
+          grep -q 'legal.html#imprint' index.html
+          grep -q 'legal.html#privacy' index.html
+          grep -q 'legal.html#terms'   index.html
+          grep -q 'excluding value added tax' index.html
+
       # Eine nicht belegte Angabe muss ziffernfrei bleiben — sonst ist die
       # Erfindung nur umbenannt. Platzhalter dürfen nicht live gehen.
+      #
+      # Geprüft werden NUR die ausgelieferten Seiten. Das README darf offene
+      # Punkte als ⟨Pflichtfeld⟩ führen — das ist dort der Zweck, nicht der
+      # Mangel. Und `-i`, weil die erste Fassung nur Großschreibung suchte
+      # und ein ⟨Pflichtfeld⟩ in der Seite glatt durchgelassen hätte.
       - name: Keine Platzhalter im Auslieferstand
         run: |
-          if grep -q 'PFLICHTFELD' index.html; then
-            echo "::error::index.html trägt noch PFLICHTFELD-Platzhalter"
-            grep -n 'PFLICHTFELD' index.html
-            exit 1
-          fi
+          fail=0
+          for f in index.html legal.html; do
+            if grep -qi 'pflichtfeld' "$f"; then
+              echo "::error::$f trägt noch einen Pflichtfeld-Platzhalter"
+              grep -ni 'pflichtfeld' "$f"
+              fail=1
+            fi
+          done
+          test "$fail" = "0"
