@@ -1,0 +1,657 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Inceptune — counts the blanks, placeholders and duplicate rows in your data sample</title>
+<meta name="description" content="Drop a CSV or JSON file and get five counts on what the sample is missing: blank fields, placeholder numbers, the time span it really covers, the entity that dominates it, and how many rows are byte-identical copies. Runs entirely in your browser.">
+<style>
+/* Inceptune — ein Arbeitspapier, keine Produktseite.
+   Keine Netzressource: keine Fremdschrift, kein CDN, kein Analysewerkzeug.
+   Das ist nicht Sparsamkeit, es ist die Zusage, die das Produkt verkauft. */
+:root{
+  --paper:#fafaf8; --ink:#000; --rule:#d9d7d0; --rule-strong:#9a978e;
+  --gap:#b3002d;                 /* was fehlt */
+  --soft:#8a867c;                /* nicht ermittelbar */
+  --wash:#f1f0ea;
+  --serif:ui-serif,Charter,Georgia,"Times New Roman",serif;
+  --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,"Liberation Mono",monospace;
+  --measure:62ch;
+  --step:clamp(1rem,.95rem + .2vw,1.0625rem);
+  --h1:clamp(1.9rem,1.3rem + 2.6vw,3.4rem);
+  --h2:clamp(1.15rem,1.05rem + .5vw,1.45rem);
+  --num:clamp(1.6rem,1.2rem + 1.8vw,2.6rem);
+}
+*,*::before,*::after{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{
+  margin:0;background:var(--paper);color:var(--ink);
+  font:var(--step)/1.6 var(--serif);
+  padding:0 clamp(1rem,4vw,3rem);
+}
+.sheet{max-width:72rem;margin:0 auto}
+a{color:var(--ink);text-decoration-thickness:1px;text-underline-offset:.18em}
+a:hover{color:var(--gap)}
+:focus-visible{outline:2px solid var(--gap);outline-offset:3px}
+h1,h2,h3{font-weight:600;line-height:1.15;margin:0}
+h1{font-size:var(--h1);letter-spacing:-.02em;max-width:34ch}
+h2{font-size:var(--h2);margin:0 0 .6rem}
+p{margin:0 0 1rem;max-width:var(--measure)}
+code,kbd{font-family:var(--mono);font-size:.9em}
+hr{border:0;border-top:1px solid var(--rule);margin:0}
+
+/* ---- Kopf: Wortmarke und Anbieter, eine Zeile, kein Menü ---- */
+.masthead{
+  display:flex;align-items:baseline;justify-content:space-between;gap:1rem;
+  padding:1.1rem 0 .9rem;border-bottom:2px solid var(--ink);flex-wrap:wrap;
+}
+.wordmark{font-family:var(--mono);font-size:1rem;letter-spacing:.34em;font-weight:600}
+.vendor{font-family:var(--mono);font-size:.72rem;letter-spacing:.08em;color:var(--soft)}
+
+/* ---- Hero: die Überschrift sagt die Aufgabe, dann sofort das Ablegefeld ---- */
+.hero{padding:clamp(2rem,6vw,4rem) 0 1.4rem}
+.lede{font-size:clamp(1.05rem,1rem + .4vw,1.2rem);max-width:54ch;margin:1.2rem 0 0;color:#2a2a28}
+.promise{
+  font-family:var(--mono);font-size:.78rem;letter-spacing:.04em;color:var(--soft);
+  margin:1.6rem 0 0;max-width:68ch;line-height:1.75;
+}
+.promise b{color:var(--ink);font-weight:600}
+
+/* ---- Ablegefeld ---- */
+.drop{
+  margin:1.8rem 0 0;border:1px dashed var(--rule-strong);background:#fff;
+  padding:clamp(1.6rem,5vw,3rem) 1.4rem;text-align:center;cursor:pointer;
+  transition:border-color .12s,background .12s;
+}
+.drop:hover,.drop:focus-visible{border-color:var(--ink)}
+.drop.over{border-color:var(--gap);border-style:solid;background:var(--wash)}
+.drop-main{font-size:clamp(1.05rem,1rem + .5vw,1.3rem);font-weight:600}
+.drop-sub{font-family:var(--mono);font-size:.76rem;color:var(--soft);margin-top:.7rem;letter-spacing:.03em}
+.actions{display:flex;gap:.5rem;flex-wrap:wrap;justify-content:center;margin-top:1.1rem}
+button{
+  font:600 .82rem/1 var(--mono);letter-spacing:.04em;padding:.62rem .95rem;
+  background:#fff;color:var(--ink);border:1px solid var(--ink);cursor:pointer;
+}
+button:hover{background:var(--ink);color:var(--paper)}
+button.quiet{border-color:var(--rule-strong);color:#3a3a37}
+button.quiet:hover{background:var(--wash);color:var(--ink);border-color:var(--ink)}
+textarea{
+  width:100%;min-height:9rem;font:.82rem/1.5 var(--mono);padding:.7rem;
+  border:1px solid var(--rule-strong);background:#fff;color:var(--ink);resize:vertical;
+}
+
+/* ---- Belegart: jede Zahl trägt, wie sie entstanden ist ---- */
+.kind{
+  font-family:var(--mono);font-size:.62rem;letter-spacing:.1em;text-transform:uppercase;
+  color:var(--soft);display:block;margin-top:.3rem;
+}
+.num{font-family:var(--mono);font-size:var(--num);font-weight:600;font-variant-numeric:tabular-nums;line-height:1}
+.num.of{font-size:.5em;font-weight:400;color:var(--soft)}
+.num.bad{color:var(--gap)}
+.undet{font-style:italic;color:var(--soft);font-family:var(--serif);font-size:1rem;max-width:40ch}
+
+/* ---- Ergebnisflächen ---- */
+section{padding:clamp(2.2rem,6vw,3.6rem) 0;border-top:1px solid var(--rule)}
+.eyebrow{font-family:var(--mono);font-size:.68rem;letter-spacing:.14em;color:var(--soft);margin:0 0 .5rem}
+.facts{display:flex;gap:clamp(1.4rem,4vw,3.2rem);flex-wrap:wrap;margin:0 0 2rem;padding:0;list-style:none}
+.facts li{margin:0}
+.facts .lab{font-family:var(--mono);font-size:.7rem;letter-spacing:.08em;color:var(--soft);display:block;margin-bottom:.35rem}
+.count{margin:0 0 2.6rem}
+.count:last-child{margin-bottom:0}
+.count h3{font-size:1.02rem;margin:0 0 .15rem}
+.count .q{font-family:var(--serif);color:#3a3a37;font-size:.95rem;margin:0 0 .9rem;max-width:58ch}
+table{border-collapse:collapse;width:100%;font-family:var(--mono);font-size:.8rem}
+caption{text-align:left;font-family:var(--mono);font-size:.68rem;letter-spacing:.08em;color:var(--soft);padding-bottom:.5rem}
+th,td{text-align:left;padding:.4rem .6rem .4rem 0;border-bottom:1px solid var(--rule);vertical-align:baseline;overflow-wrap:anywhere}
+th{font-weight:600;color:var(--soft);font-size:.68rem;letter-spacing:.07em;text-transform:uppercase;border-bottom-color:var(--rule-strong)}
+td.n{text-align:right;font-variant-numeric:tabular-nums;padding-right:1.1rem}
+td.bad{color:var(--gap);font-weight:600}
+tr.zero td{color:var(--soft)}
+
+/* ---- Rollenbestätigung: die Stelle, an der nicht geraten wird ---- */
+.ask{background:var(--wash);border-left:2px solid var(--ink);padding:1.2rem 1.3rem;margin:0 0 2.4rem}
+.ask h2{margin-bottom:.3rem}
+.ask > p{font-size:.95rem;max-width:60ch}
+.fields{display:grid;gap:1.1rem;grid-template-columns:repeat(auto-fit,minmax(min(15rem,100%),1fr));margin-top:1.1rem}
+label{display:block;font-family:var(--mono);font-size:.7rem;letter-spacing:.07em;color:#3a3a37;margin-bottom:.35rem}
+select,input[type=text],input[type=number]{
+  width:100%;font:.82rem/1.4 var(--mono);padding:.5rem;border:1px solid var(--rule-strong);
+  background:#fff;color:var(--ink);
+}
+.hint{font-family:var(--mono);font-size:.66rem;color:var(--soft);margin-top:.3rem;line-height:1.5}
+
+/* ---- Tarife ---- */
+.tiers{display:grid;gap:1px;grid-template-columns:repeat(auto-fit,minmax(min(18rem,100%),1fr));background:var(--rule-strong);border:1px solid var(--rule-strong)}
+.tier{background:#fff;padding:1.5rem 1.4rem}
+.tier.paid{background:var(--wash)}
+.tier h3{font-size:1.3rem;margin-bottom:.1rem}
+.price{font-family:var(--mono);font-size:1.5rem;font-weight:600;font-variant-numeric:tabular-nums;margin:.5rem 0 .2rem}
+.price small{font-size:.6em;font-weight:400;color:var(--soft)}
+.tier ul{margin:1rem 0 0;padding:0;list-style:none;font-size:.93rem}
+.tier li{padding:.42rem 0 .42rem 1.1rem;position:relative;border-top:1px solid var(--rule)}
+.tier li::before{content:"—";position:absolute;left:0;color:var(--soft)}
+.tier li:first-child{border-top:0}
+.limit{font-family:var(--mono);font-size:.72rem;color:var(--gap);margin:.9rem 0 0;line-height:1.6}
+.notlive{font-family:var(--mono);font-size:.7rem;color:var(--soft);margin-top:1rem;line-height:1.6}
+
+.cols2{display:grid;gap:clamp(1.4rem,4vw,3rem);grid-template-columns:repeat(auto-fit,minmax(min(20rem,100%),1fr))}
+.small{font-size:.93rem}
+footer{padding:2rem 0 3rem;border-top:2px solid var(--ink);font-family:var(--mono);font-size:.7rem;color:var(--soft);line-height:1.9}
+.hidden{display:none !important}
+@media (prefers-reduced-motion:reduce){*{transition:none !important}}
+</style>
+</head>
+<body>
+<div class="sheet">
+
+<header class="masthead">
+  <span class="wordmark">INCEPTUNE</span>
+  <span class="vendor">Septun O&Uuml; &middot; no account &middot; no upload &middot; no tracking</span>
+</header>
+
+<div class="hero">
+  <h1>A row count is not an amount of information.</h1>
+  <p class="lede">Inceptune counts what a data sample is missing and what only looks like a value.
+  Drop a file below. It is read in this browser tab and never sent anywhere &mdash; there is no
+  server that could receive it.</p>
+
+  <div class="drop" id="drop" tabindex="0" role="button" aria-describedby="drop-sub">
+    <div class="drop-main">Drop a CSV, TSV or JSON file here</div>
+    <div class="drop-sub" id="drop-sub">or click to choose &middot; or paste the text &middot; nothing leaves this page</div>
+    <div class="actions">
+      <button type="button" id="pick">Choose a file</button>
+      <button type="button" class="quiet" id="toggle-paste">Paste text instead</button>
+      <button type="button" class="quiet" id="sample">Try a sample</button>
+    </div>
+  </div>
+  <input type="file" id="file" class="hidden" accept=".csv,.tsv,.txt,.json,.ndjson,.jsonl">
+  <div id="paste-wrap" class="hidden" style="margin-top:1rem">
+    <label for="paste">Paste CSV, TSV, JSON or one JSON object per line</label>
+    <textarea id="paste" spellcheck="false" placeholder="id,buyer,value,deadline&#10;715121,AOK,639350,2026-10-16"></textarea>
+    <div class="actions" style="justify-content:flex-start;margin-top:.7rem">
+      <button type="button" id="run-paste">Count this</button>
+    </div>
+  </div>
+
+  <p class="promise">Five counts, all of them arithmetic: <b>blank fields per column</b> &middot;
+  <b>placeholder numbers</b> that sit where a value should be &middot; the <b>time span the rows
+  actually cover</b> &middot; the <b>single entity that dominates them</b> &middot; how many rows are
+  <b>byte-identical copies</b> of another row. No model, no inference, no guessing which column
+  means what &mdash; it asks you.</p>
+</div>
+
+<!-- ===================== Ergebnis ===================== -->
+<section id="result" class="hidden" aria-live="polite">
+  <p class="eyebrow">What this file is</p>
+  <ul class="facts" id="facts"></ul>
+
+  <div class="ask">
+    <h2>Three of the five counts need something the file does not say</h2>
+    <p>A CSV does not declare which column is mandatory, which one is a date, or which one names the
+    entity. Guessing it would be the same mistake this tool is built to find, so it is put to you
+    instead. Suggestions are ranked by what was counted, never applied on their own.</p>
+    <div class="fields">
+      <div>
+        <label for="col-date">Date column</label>
+        <select id="col-date"></select>
+        <p class="hint" id="hint-date"></p>
+      </div>
+      <div>
+        <label for="col-entity">Entity column</label>
+        <select id="col-entity"></select>
+        <p class="hint" id="hint-entity"></p>
+      </div>
+      <div>
+        <label for="col-num">Numeric column to check for placeholders</label>
+        <select id="col-num"></select>
+        <p class="hint" id="hint-num"></p>
+      </div>
+      <div>
+        <label for="thr">A value is a placeholder at or below</label>
+        <input type="number" id="thr" value="1" step="any">
+        <p class="hint">Your call: <code>&le; 1</code> is right for a contract value and wrong for a
+        price list. Premium remembers the decision per column.</p>
+      </div>
+      <div>
+        <label for="style">Number format in this file</label>
+        <select id="style">
+          <option value="en">1,000.50 &mdash; point is the decimal mark</option>
+          <option value="de">1.000,50 &mdash; comma is the decimal mark</option>
+        </select>
+        <p class="hint">Not detected, because <code>1.400</code> is 1400 in one reading and 1.4 in
+        the other. Both are claims; you make it.</p>
+      </div>
+      <div>
+        <label for="claimed">Total the provider claims to hold (optional)</label>
+        <input type="number" id="claimed" min="1" step="1" placeholder="e.g. 609">
+        <p class="hint">Type what the source says its full set contains, and the coverage share is
+        counted against it.</p>
+      </div>
+    </div>
+  </div>
+
+  <div id="counts"></div>
+
+  <div class="actions" style="justify-content:flex-start;margin-top:2rem">
+    <button type="button" id="download">Download this report</button>
+    <button type="button" class="quiet" id="reset">Check another file</button>
+  </div>
+</section>
+
+<!-- ===================== Tarife ===================== -->
+<section id="pricing">
+  <p class="eyebrow">Pricing</p>
+  <h2 style="font-size:var(--h2);max-width:40ch">The free tier is the whole check. What you pay for is memory.</h2>
+  <p class="small" style="max-width:58ch">Run one, and you have a finding. Run two, and you have a
+  difference &mdash; and a difference needs something that remembers the first run. A browser tab
+  does not.</p>
+
+  <div class="tiers">
+    <div class="tier">
+      <h3>Free</h3>
+      <div class="price">$0 <small>forever, no account</small></div>
+      <ul>
+        <li>All five counts, complete and uncapped</li>
+        <li>No row, column or file-size limit &mdash; the limit is your own RAM, not our tier</li>
+        <li>CSV, TSV, JSON and one-object-per-line</li>
+        <li>Coverage share against the total your provider claims</li>
+        <li>The report as a file to keep</li>
+        <li>Every number states how it was produced: counted, ratio, your input, or not determined</li>
+      </ul>
+      <p class="limit">The one limit: Free has no memory. Close the tab and the run is gone.</p>
+    </div>
+    <div class="tier paid">
+      <h3>Premium</h3>
+      <div class="price">$12 <small>/ month &middot; $120 / year</small></div>
+      <ul>
+        <li>Up to 10 sources you enter &mdash; a URL, a feed or an API endpoint &mdash; fetched once a day</li>
+        <li>The memory: every measurement of every run is kept</li>
+        <li>The line over time, per measurement and per source: <em>last week 43% of deadlines were missing, this week 61%</em></li>
+        <li>Your thresholds, saved per column</li>
+        <li>A private feed that tells you when a measurement crosses one</li>
+        <li>Only the measurement and a fingerprint are stored &mdash; never the content</li>
+      </ul>
+      <p class="notlive">Premium is not live yet. The free tier is finished work, not a trial.
+      If the memory is the part you need, write one line about the source you would point it at:
+      <a href="mailto:PFLICHTFELD@inceptune.com?subject=Inceptune%20Premium">PFLICHTFELD@inceptune.com</a>
+      &mdash; billing will run through a merchant of record, so VAT is handled where you are.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== Die Grenzen ===================== -->
+<section id="limits">
+  <p class="eyebrow">What it does not do</p>
+  <div class="cols2">
+    <div>
+      <p class="small"><b>Only byte-identical rows count as copies.</b> Two rows describing the same
+      thing with a different id are two rows here. That is a deliberate floor: near-duplicate
+      matching needs a similarity threshold, and a threshold is a judgement call this tool refuses to
+      make for you. In practice it means the count fires rarely &mdash; most providers attach an id or
+      a timestamp to every record.</p>
+      <p class="small"><b>No entity resolution.</b> &ldquo;Siemens AG&rdquo; and &ldquo;Siemens
+      Aktiengesellschaft&rdquo; are two entities here.</p>
+      <p class="small"><b>No column roles are inferred.</b> If you do not say which column is the
+      date, the time span reads <span class="undet">not determined</span> and stays digit-free.</p>
+    </div>
+    <div>
+      <p class="small"><b>No confidence score.</b> There is no single number that says how good your
+      data is. Five counts, each answerable, each traceable to rows you can open.</p>
+      <p class="small"><b>No model.</b> Nothing here is inferred, summarised or classified by a
+      language model. That is why it costs nothing to run and why the same file always gives the same
+      answer.</p>
+      <p class="small"><b>No measurement of you.</b> No cookie, no analytics, no request. Which also
+      means nobody here knows how many people use this &mdash; that is the price of the promise, and
+      it is paid on purpose.</p>
+    </div>
+  </div>
+</section>
+
+<footer>
+  Inceptune &middot; Septun O&Uuml;, Estonia &middot; ⟨Pflichtfeld: Registernummer, Anschrift, USt-IdNr.⟩<br>
+  This page makes no network requests after it loads. Your file is read in this tab and is never transmitted.<br>
+  <a href="mailto:PFLICHTFELD@inceptune.com">PFLICHTFELD@inceptune.com</a> &middot;
+  <a href="https://github.com/inceptune">github.com/inceptune</a>
+</footer>
+
+</div>
+
+<script src="inceptune.js"></script>
+<script>
+/* Nur Verdrahtung: die Zählungen stehen in inceptune.js und werden dort geprüft
+   (node inceptune.test.js). Hier passiert nichts, was eine Zahl erzeugt. */
+(function(){
+  'use strict';
+  var I = window.Inceptune;
+  var table = null;
+
+  var el = function(id){ return document.getElementById(id); };
+  var esc = function(s){ var d=document.createElement('div'); d.textContent=String(s); return d.innerHTML; };
+  var fmt = function(n){ return Number(n).toLocaleString('en-US'); };
+  var pct = function(x){ return (x*100).toFixed(x < 0.01 && x > 0 ? 2 : 1) + '%'; };
+
+  var KIND_LABEL = { counted:'counted', ratio:'ratio of two counts',
+                     user_supplied:'you told us', undetermined:'not determined' };
+
+  // Eine Zahl wird nie ohne ihre Art gezeigt. `undetermined` bleibt ziffernfrei.
+  function num(c, opts){
+    opts = opts || {};
+    if (!c || c.kind === I.UNDETERMINED) {
+      return '<span class="undet">not determined &mdash; ' + esc(c && c.reason || 'no input') + '</span>';
+    }
+    var body;
+    if (c.kind === I.RATIO) body = pct(c.value);
+    else body = fmt(c.value);
+    var of = (c.of != null && c.kind === I.COUNTED) ? ' <span class="num of">of ' + fmt(c.of) + '</span>' : '';
+    return '<span class="num' + (opts.bad ? ' bad' : '') + '">' + body + of + '</span>' +
+           '<span class="kind">' + KIND_LABEL[c.kind] + '</span>';
+  }
+
+  function fillSelect(sel, candidates, allColumns, label){
+    var html = '<option value="">' + esc(label) + '</option>';
+    if (candidates.length) {
+      html += '<optgroup label="Suggested — ranked by what was counted">';
+      candidates.forEach(function(c){
+        var why = c.rate !== undefined
+          ? Math.round(c.rate*100) + '% of filled rows parse'
+          : c.distinct + ' distinct values in ' + c.filled + ' filled rows';
+        html += '<option value="' + c.index + '">' + esc(c.column) + ' — ' + esc(why) + '</option>';
+      });
+      html += '</optgroup>';
+    }
+    html += '<optgroup label="Every column">';
+    allColumns.forEach(function(name, i){
+      html += '<option value="' + i + '">' + esc(name) + '</option>';
+    });
+    html += '</optgroup>';
+    sel.innerHTML = html;
+  }
+
+  function render(){
+    if (!table) return;
+    var opts = {
+      numberStyle: el('style').value,
+      claimedTotal: el('claimed').value,
+      threshold: el('thr').value === '' ? 1 : Number(el('thr').value),
+      dateColumn: el('col-date').value === '' ? null : Number(el('col-date').value),
+      entityColumn: el('col-entity').value === '' ? null : Number(el('col-entity').value),
+      numericColumn: el('col-num').value === '' ? null : Number(el('col-num').value),
+      topN: 6
+    };
+    var a = I.analyse(table, opts);
+
+    el('facts').innerHTML =
+      ['<li><span class="lab">Rows</span>' + num(a.rows) + '</li>',
+       '<li><span class="lab">Columns</span>' + num(a.columns) + '</li>',
+       '<li><span class="lab">Independent rows</span>' + num(a.duplicates.independent) + '</li>',
+       '<li><span class="lab">Format</span><span class="num" style="font-size:1.1rem">' +
+         esc(a.format === 'json' ? 'JSON' : 'delimited &lsquo;' + (a.delimiter === '\t' ? 'TAB' : a.delimiter) + '&rsquo;')
+         .replace('&amp;lsquo;','&lsquo;').replace('&amp;rsquo;','&rsquo;') + '</span></li>'
+      ].join('');
+
+    var out = [];
+
+    // 1 — Leerstand
+    var rowsB = a.blanks.slice().sort(function(x,y){ return y.blank.value - x.blank.value; })
+      .map(function(b){
+        var z = b.blank.value === 0;
+        return '<tr' + (z ? ' class="zero"' : '') + '><td>' + esc(b.column) + '</td>' +
+               '<td class="n' + (z ? '' : ' bad') + '">' + fmt(b.blank.value) + '</td>' +
+               '<td class="n">' + fmt(b.filled.value) + '</td>' +
+               '<td class="n">' + (z ? '—' : pct(b.share.value)) + '</td></tr>';
+      }).join('');
+    out.push(block('1', 'Blank fields per column',
+      'Counted, not averaged. A column that is 40% empty is not &ldquo;mostly fine&rdquo;.',
+      '<table><caption>Sorted by blanks, most first</caption><thead><tr><th>Column</th>' +
+      '<th style="text-align:right">Blank</th><th style="text-align:right">Filled</th>' +
+      '<th style="text-align:right">Share</th></tr></thead><tbody>' + rowsB + '</tbody></table>'));
+
+    // 2 — Platzhalter
+    var p = a.placeholders;
+    if (p.value && p.value.kind === I.UNDETERMINED) {
+      out.push(block('2','Placeholder numbers',
+        'A number that sits where a value should be: 0, 0.01, -1, or whatever your source uses.',
+        num(p.value)));
+    } else {
+      var vrows = p.values.map(function(v){
+        return '<tr><td>' + esc(v.value) + '</td><td class="n bad">' + fmt(v.count.value) + '</td>' +
+               '<td class="n">' + pct(v.count.value / Math.max(1, p.numeric.value)) + '</td></tr>';
+      }).join('') || '<tr class="zero"><td colspan="3">No value at or below your threshold.</td></tr>';
+      out.push(block('2','Placeholder numbers in <code>' + esc(p.column) + '</code>',
+        'Shown, not removed. Whether 0 is a value in this column is your call, not ours.',
+        '<ul class="facts"><li><span class="lab">Suspect values</span>' + num(p.suspect, {bad:p.suspect.value>0}) +
+        '</li><li><span class="lab">Share of numeric</span>' + num(p.share) +
+        '</li><li><span class="lab">Threshold</span>' + num(p.threshold) + '</li></ul>' +
+        '<table><caption>Each distinct low value and how often it occurs</caption><thead><tr><th>Value</th>' +
+        '<th style="text-align:right">Rows</th><th style="text-align:right">Share</th></tr></thead><tbody>' +
+        vrows + '</tbody></table>'));
+    }
+
+    // 3 — Zeitraum
+    var s = a.timeSpan;
+    if (s.value && s.value.kind === I.UNDETERMINED) {
+      out.push(block('3','The time span the rows actually cover',
+        'Row count is not a freshness signal. 25 rows can span two calendar days.', num(s.value)));
+    } else if (s.span && s.span.kind === I.UNDETERMINED) {
+      out.push(block('3','The time span the rows actually cover','', num(s.span)));
+    } else {
+      out.push(block('3','The time span in <code>' + esc(s.column) + '</code>',
+        'Row count is not a freshness signal. Twenty-five rows can span two calendar days.',
+        '<ul class="facts"><li><span class="lab">Calendar days spanned</span>' + num(s.calendarDaysSpanned) +
+        '</li><li><span class="lab">Distinct days present</span>' + num(s.distinctDays) +
+        '</li><li><span class="lab">Days covered</span>' + num(s.density) +
+        '</li><li><span class="lab">First</span><span class="num" style="font-size:1.1rem">' + esc(s.first) +
+        '</span><span class="kind">counted</span></li>' +
+        '<li><span class="lab">Last</span><span class="num" style="font-size:1.1rem">' + esc(s.last) +
+        '</span><span class="kind">counted</span></li>' +
+        '<li><span class="lab">Rows with a readable date</span>' + num(s.parsed) + '</li></ul>'));
+    }
+
+    // 4 — Dominanz
+    var d = a.dominance;
+    if (d.value && d.value.kind === I.UNDETERMINED) {
+      out.push(block('4','The single entity that dominates the sample',
+        'A sample where one entity holds half the rows describes that entity, not the market.',
+        num(d.value)));
+    } else if (d.top && d.top.kind === I.UNDETERMINED) {
+      out.push(block('4','The single entity that dominates the sample','', num(d.top)));
+    } else {
+      var drows = d.top.map(function(x){
+        return '<tr><td>' + esc(x.value) + '</td><td class="n">' + fmt(x.count.value) + '</td>' +
+               '<td class="n">' + pct(x.share.value) + '</td></tr>';
+      }).join('');
+      out.push(block('4','Dominance in <code>' + esc(d.column) + '</code>',
+        'A sample where one entity holds half the rows describes that entity, not the market.',
+        '<ul class="facts"><li><span class="lab">Top entity holds</span>' + num(d.topShare, {bad:d.topShare.value>=0.3}) +
+        '</li><li><span class="lab">Distinct entities</span>' + num(d.distinct) + '</li></ul>' +
+        '<table><caption>Most frequent values</caption><thead><tr><th>Value</th>' +
+        '<th style="text-align:right">Rows</th><th style="text-align:right">Share</th></tr></thead><tbody>' +
+        drows + '</tbody></table>'));
+    }
+
+    // 5 — Nachdrucke
+    var du = a.duplicates;
+    var grows = du.groups.map(function(g){
+      return '<tr><td>' + esc(g.fingerprint) + '</td><td class="n bad">' + fmt(g.copies.value) + '</td>' +
+             '<td>' + g.firstRows.join(', ') + '</td></tr>';
+    }).join('') || '<tr class="zero"><td colspan="3">No two rows are byte-identical.</td></tr>';
+    out.push(block('5','Rows against independent observations',
+      'Twenty reprints of one notice are one observation, not twenty. Byte-identical only &mdash; a differing id makes it a second row.',
+      '<ul class="facts"><li><span class="lab">Rows</span>' + num(du.rows) +
+      '</li><li><span class="lab">Independent</span>' + num(du.independent) +
+      '</li><li><span class="lab">Redundant</span>' + num(du.redundant, {bad:du.redundant.value>0}) + '</li></ul>' +
+      '<table><caption>Groups of identical rows, line numbers as in the file</caption><thead><tr>' +
+      '<th>Fingerprint</th><th style="text-align:right">Copies</th><th>Lines</th></tr></thead><tbody>' +
+      grows + '</tbody></table>'));
+
+    // Abdeckung
+    var c = a.coverage;
+    out.push(block('+','Coverage against the total your provider claims',
+      'The share you actually hold of what the source says exists.',
+      c.claimed.kind === I.UNDETERMINED ? num(c.claimed) :
+      '<ul class="facts"><li><span class="lab">You hold</span>' + num(c.share, {bad:c.share.value<0.5}) +
+      '</li><li><span class="lab">Rows held</span>' + num(c.held) +
+      '</li><li><span class="lab">Not in this sample</span>' + num(c.missing, {bad:true}) +
+      '</li><li><span class="lab">Provider claims</span>' + num(c.claimed) + '</li></ul>'));
+
+    el('counts').innerHTML = out.join('');
+    window.__lastReport = a;
+  }
+
+  function block(n, title, question, body){
+    return '<div class="count"><p class="eyebrow">Count ' + n + '</p><h3>' + title + '</h3>' +
+           (question ? '<p class="q">' + question + '</p>' : '') + body + '</div>';
+  }
+
+  function load(text){
+    table = I.parseFile(text);
+    if (!table.columns.length) {
+      alert('Nothing countable in there — no header row and no JSON records.');
+      return;
+    }
+    var a = I.analyse(table, {});
+    fillSelect(el('col-date'), a.candidates.date, table.columns, 'not determined — pick a column');
+    fillSelect(el('col-entity'), a.candidates.entity, table.columns, 'not determined — pick a column');
+    fillSelect(el('col-num'), a.candidates.numeric, table.columns, 'not determined — pick a column');
+    el('hint-date').textContent = a.candidates.date.length
+      ? 'Counts 3 needs this. ' + a.candidates.date.length + ' column(s) parse as dates.'
+      : 'No column parses as a date in 80% of its filled rows.';
+    el('hint-entity').textContent = a.candidates.entity.length
+      ? 'Count 4 needs this. Suggestions have few distinct values; a near-unique column is a key, not an entity.'
+      : 'No column has few enough distinct values to be an entity. Any column is still selectable.';
+    el('hint-num').textContent = a.candidates.numeric.length
+      ? 'Count 2 needs this. ' + a.candidates.numeric.length + ' column(s) are numeric on 90%+ of filled rows.'
+      : 'No column is numeric on 90% of its filled rows.';
+    el('result').classList.remove('hidden');
+    render();
+    el('result').scrollIntoView({behavior:'smooth', block:'start'});
+  }
+
+  function readFile(f){
+    var r = new FileReader();
+    r.onload = function(){ load(String(r.result)); };
+    r.onerror = function(){ alert('Could not read that file.'); };
+    r.readAsText(f);
+  }
+
+  // ---- Ablegefeld ----
+  var drop = el('drop');
+  drop.addEventListener('click', function(e){ if (e.target === drop || e.target.className.indexOf('drop-') === 0) el('file').click(); });
+  drop.addEventListener('keydown', function(e){ if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); el('file').click(); } });
+  ['dragenter','dragover'].forEach(function(t){
+    drop.addEventListener(t, function(e){ e.preventDefault(); drop.classList.add('over'); });
+  });
+  ['dragleave','drop'].forEach(function(t){
+    drop.addEventListener(t, function(e){ e.preventDefault(); drop.classList.remove('over'); });
+  });
+  drop.addEventListener('drop', function(e){
+    var f = e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0];
+    if (f) readFile(f);
+  });
+  el('pick').addEventListener('click', function(e){ e.stopPropagation(); el('file').click(); });
+  el('file').addEventListener('change', function(){ if (this.files[0]) readFile(this.files[0]); });
+  el('toggle-paste').addEventListener('click', function(e){
+    e.stopPropagation(); el('paste-wrap').classList.toggle('hidden'); el('paste').focus();
+  });
+  el('run-paste').addEventListener('click', function(){
+    var t = el('paste').value;
+    if (t.trim()) load(t); else el('paste').focus();
+  });
+
+  // Die Stichprobe zeigt alle fünf Befunde an einem echten Zuschnitt:
+  // Leerstand, Platzhalter, zwei Kalendertage, ein dominanter Käufer, ein Nachdruck.
+  var SAMPLE = [
+    'notice,buyer,value,currency,deadline',
+    '715121,AOK Rheinland-Pfalz/Saarland,639350,EUR,2026-10-16',
+    '715122,AOK Rheinland-Pfalz/Saarland,1,EUR,2026-10-16',
+    '715123,AOK Rheinland-Pfalz/Saarland,0,EUR,2026-10-16',
+    '715124,AOK Rheinland-Pfalz/Saarland,412000,EUR,2026-10-16',
+    '715125,AOK Rheinland-Pfalz/Saarland,0.01,EUR,',
+    '715126,AOK Rheinland-Pfalz/Saarland,88400,EUR,2026-10-16',
+    '718540,Stadt Walsrode,-1,EUR,',
+    '718541,"Techniker Krankenkasse",1,EUR,2026-10-15',
+    '718542,DB InfraGO,676582091,EUR,2026-10-15',
+    '718543,MVV Gruene Waerme,303768800,EUR,2026-10-15',
+    '718544,Netz Leipzig,1,EUR,',
+    '718545,"Universitaetsklinikum des Saarlandes",11850000,EUR,2026-10-15',
+    '718542,DB InfraGO,676582091,EUR,2026-10-15'
+  ].join('\n');
+  el('sample').addEventListener('click', function(e){ e.stopPropagation(); load(SAMPLE); });
+
+  ['col-date','col-entity','col-num','thr','claimed','style'].forEach(function(id){
+    el(id).addEventListener('change', render);
+    el(id).addEventListener('input', render);
+  });
+
+  el('reset').addEventListener('click', function(){
+    table = null; el('result').classList.add('hidden');
+    el('file').value = ''; el('paste').value = '';
+    window.scrollTo({top:0, behavior:'smooth'});
+  });
+
+  // Bericht als Textdatei, lokal erzeugt. Kein Netz, kein Server.
+  el('download').addEventListener('click', function(){
+    var a = window.__lastReport;
+    if (!a) return;
+    var L = [];
+    L.push('INCEPTUNE REPORT');
+    L.push('Every number states how it was produced. "not determined" carries no digit.');
+    L.push('');
+    L.push('rows                 ' + a.rows.value + '  [counted]');
+    L.push('columns              ' + a.columns.value + '  [counted]');
+    L.push('independent rows     ' + a.duplicates.independent.value + '  [counted]');
+    L.push('redundant rows       ' + a.duplicates.redundant.value + '  [counted]');
+    L.push('number format        ' + a.numberStyle.value + '  [you told us]');
+    L.push('');
+    L.push('BLANK FIELDS PER COLUMN  [counted]');
+    a.blanks.forEach(function(b){
+      L.push('  ' + b.column + ': ' + b.blank.value + ' blank of ' + b.blank.of +
+             ' (' + (b.share.kind === 'ratio' ? (b.share.value*100).toFixed(1) + '%' : 'n/a') + ')');
+    });
+    L.push('');
+    function one(name, obj, lines){
+      L.push(name);
+      if (obj.value && obj.value.kind === 'undetermined') { L.push('  not determined — ' + obj.value.reason); }
+      else if (obj.span && obj.span.kind === 'undetermined') { L.push('  not determined — ' + obj.span.reason); }
+      else if (obj.top && obj.top.kind === 'undetermined') { L.push('  not determined — ' + obj.top.reason); }
+      else lines(obj);
+      L.push('');
+    }
+    one('PLACEHOLDER NUMBERS', a.placeholders, function(p){
+      L.push('  column ' + p.column + ', threshold <= ' + p.threshold.value + '  [you told us]');
+      L.push('  ' + p.suspect.value + ' of ' + p.numeric.value + ' numeric values  [counted]');
+      p.values.forEach(function(v){ L.push('    value ' + v.value + ': ' + v.count.value + ' rows'); });
+    });
+    one('TIME SPAN', a.timeSpan, function(s){
+      L.push('  column ' + s.column);
+      L.push('  ' + s.first + ' .. ' + s.last + ', ' + s.calendarDaysSpanned.value +
+             ' calendar days spanned, ' + s.distinctDays.value + ' distinct days present  [counted]');
+    });
+    one('DOMINANCE', a.dominance, function(d){
+      L.push('  column ' + d.column + ', ' + d.distinct.value + ' distinct entities  [counted]');
+      d.top.forEach(function(x){ L.push('    ' + x.value + ': ' + x.count.value + ' rows (' + (x.share.value*100).toFixed(1) + '%)'); });
+    });
+    L.push('IDENTICAL ROWS  [counted, byte-identical only]');
+    if (!a.duplicates.groups.length) L.push('  none');
+    a.duplicates.groups.forEach(function(g){
+      L.push('  fingerprint ' + g.fingerprint + ': ' + g.copies.value + ' copies, lines ' + g.firstRows.join(', '));
+    });
+    L.push('');
+    L.push('COVERAGE');
+    if (a.coverage.claimed.kind === 'undetermined') L.push('  not determined — ' + a.coverage.claimed.reason);
+    else L.push('  ' + a.coverage.held.value + ' of ' + a.coverage.claimed.value + ' claimed = ' +
+                (a.coverage.share.value*100).toFixed(2) + '%; ' + a.coverage.missing.value + ' not in this sample');
+    L.push('');
+    L.push('Produced locally by Inceptune. Nothing was uploaded.');
+
+    var blob = new Blob([L.join('\n')], {type:'text/plain;charset=utf-8'});
+    var url = URL.createObjectURL(blob);
+    var link = document.createElement('a');
+    link.href = url; link.download = 'inceptune-report.txt';
+    document.body.appendChild(link); link.click(); document.body.removeChild(link);
+    setTimeout(function(){ URL.revokeObjectURL(url); }, 1000);
+  });
+})();
+</script>
+</body>
+</html>

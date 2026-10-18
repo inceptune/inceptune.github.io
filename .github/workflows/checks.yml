@@ -1,0 +1,36 @@
+name: checks
+on:
+  push:
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Die fünf Zählungen
+        run: node inceptune.test.js
+
+      # Die Zusage im Fuß der Seite lautet, dass nach dem Laden kein
+      # Netzaufruf mehr stattfindet. Das ist das Produktversprechen, also
+      # wird es geprüft und nicht nur behauptet. Erlaubt ist genau ein
+      # Vorkommen: der GitHub-Link im Fuß.
+      - name: Kein Netzaufruf in der Seite
+        run: |
+          n=$(grep -c 'https\?://' index.html)
+          echo "externe Verweise: $n (erlaubt: 1)"
+          test "$n" = "1"
+
+      # Eine nicht belegte Angabe muss ziffernfrei bleiben — sonst ist die
+      # Erfindung nur umbenannt. Platzhalter dürfen nicht live gehen.
+      - name: Keine Platzhalter im Auslieferstand
+        run: |
+          if grep -q 'PFLICHTFELD' index.html; then
+            echo "::error::index.html trägt noch PFLICHTFELD-Platzhalter"
+            grep -n 'PFLICHTFELD' index.html
+            exit 1
+          fi
