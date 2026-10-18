@@ -3,7 +3,10 @@
 Counts the blanks, placeholders and duplicate rows in a data sample. Everything runs in the
 visitor's browser; the file is never transmitted, because there is no server that could receive it.
 
-Vendor: Septun OÜ (Estonia). Brand reserved as `github.com/inceptune`.
+Vendor: **Inceptune OÜ**, registry code 17300663, VAT EE102889378, Tartu mnt 67/1-13b,
+10115 Tallinn, Estonia — board member Tobias Oberrauch, entered in the register 11.08.2025
+(source: Estonian business register via inforegister.ee, read 2026-10-18).
+Brand also reserved as `github.com/inceptune` (org created 18.08.2025).
 
 **`inceptune.com` is registered** — 2026-10-18T08:22:06Z, expires 2027-10-18, registrar
 Greenmark IT GmbH, nameservers `NS1.MAINNS.DE` / `NS2.MAINNS.EU` / `NS3.MAINNS.NET`.
@@ -41,9 +44,9 @@ its own footer that it makes no network request after it loads, and that promise
 
 - **Die drei Dateien ausliefern und TLS einrichten.** Ohne gültiges Zertifikat bounct das
   Publikum, und die eigene Zusage „nothing leaves this page" ist über reines HTTP nicht haltbar.
-- ⟨Pflichtfeld⟩ Die vier Platzhalter `PFLICHTFELD@inceptune.com` durch eine echte Adresse ersetzen
-  (zweimal im Tarifblock, zweimal im Fuß).
-- ⟨Pflichtfeld⟩ Impressum: Registernummer, Anschrift und USt-IdNr. der Septun OÜ im Fuß.
+- **Postfach einrichten.** `hello@inceptune.com` steht an allen drei Stellen in der Seite, aber
+  die Domain trägt heute einen Null-MX (`MX 0 .` nach RFC 7505) und weist damit jede Mail ab.
+  Ohne MX des Postfachanbieters prallt jede Antwort auf die Startposts ab.
 - ⟨Pflichtfeld⟩ Datenschutzerklärung nach Art. 13 DSGVO und AGB mit Rechtezusicherung des Nutzers.
   Auch eine Seite ohne Verarbeitung braucht beides; eine Auftragsverarbeitung nach Art. 28 braucht
   sie nicht, weil nichts übertragen wird.
